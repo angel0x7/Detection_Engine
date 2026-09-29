@@ -1,0 +1,11 @@
+title: Suspicious su/sudo to root followed by shell
+status: experimental
+logsource:
+  product: tetragon
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '/su'
+    CommandLine|contains: 'root'
+  condition: selection
+level: medium

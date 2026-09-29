@@ -1,0 +1,38 @@
+# T1055.008 - Process Injection: Ptrace System Calls
+#
+# ptrace request codes (linux/ptrace.h):
+#    4 PTRACE_POKETEXT   write a word into the tracee's code/text
+#    5 PTRACE_POKEDATA   write a word into the tracee's data
+#    6 PTRACE_POKEUSER   write into the tracee's USER area (registers)
+#   16 PTRACE_ATTACH     attach to a running process
+# 16902 PTRACE_SEIZE     0x4206, attach without stopping (used by newer debuggers/injectors)
+#
+# NOTE: the kernel symbol/args below were NOT verified on a live kernel - check
+# `grep sys_ptrace /sys/kernel/tracing/available_filter_functions` and inspect the
+# first real event (python3 tetragon_normalize.py) before trusting the arg order.
+# On x86_64 the event's function_name is typically "__x64_sys_ptrace".
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: "detect-ptrace-injection"
+spec:
+  kprobes:
+    - call: "sys_ptrace"
+      syscall: true
+      args:
+        - index: 0
+          type: "int"      # -> event args[0]: the ptrace request code
+        - index: 1
+          type: "int"      # -> event args[1]: target pid
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: "Equal"
+              values:
+                - "4"       # PTRACE_POKETEXT
+                - "5"       # PTRACE_POKEDATA
+                - "6"       # PTRACE_POKEUSER
+                - "16"      # PTRACE_ATTACH
+                - "16902"   # PTRACE_SEIZE
+          matchActions:
+            - action: Post

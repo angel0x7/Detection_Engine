@@ -1,0 +1,22 @@
+title: Ptrace attach or memory-write request (possible process injection)
+status: experimental
+description: >
+  Uses POSITIONAL argument matching: PtraceRequest is args[0] and PtraceTargetPid
+  is args[1] (see tetragon_pipeline.py). A type-only match could not tell them apart.
+tags:
+  - attack.defense-evasion
+  - attack.t1055.008
+logsource:
+  product: tetragon
+  category: process_kprobe
+detection:
+  selection:
+    function_name|endswith: 'sys_ptrace'
+    PtraceRequest:
+      - 4       # POKETEXT
+      - 5       # POKEDATA
+      - 6       # POKEUSER
+      - 16      # ATTACH
+      - 16902   # SEIZE
+  condition: selection
+level: high

@@ -1,0 +1,12 @@
+title: Setuid to root from non-root login session
+status: experimental
+logsource:
+  product: tetragon
+  category: process_lsm
+detection:
+  selection:
+    function_name: 'security_task_fix_setuid'
+  filter:
+    auid: 0
+  condition: selection and not filter
+level: medium
